@@ -6,7 +6,7 @@ mkdir -p "$WYVERN_DIR"
 function dep() {
     if [ ! $(ls "$WYVERN_DIR" | grep "$1.exe") ]; then
         src="https://github.com/$UNAME/$1/releases/download/v$2/$1.exe"
-        echo "Downloading $1.exe from $SRC..."
+        # echo "Downloading $1.exe from $SRC..."
         wget $src -P "$WYVERN_DIR" 2>/dev/null
     fi
 }
@@ -92,38 +92,49 @@ if [ ! $(ls | grep globals.py) ]; then
     touch globals.py
 fi
 
-function tsc($file) {
+function isnewer {
+    [ $1 -nt $2 ]
+}
+
+function tsc() {
     out="$("$WYVERN_DIR/pt".exe $1 ts~js '(?<=\.m|\.)tsx?$~~js' '(?=\..?js.?$)~~.min')"
-    "$WYVERN_DIR/mtsc.exe" --target=es2019 --jsx=JSX.createElement $1 --minify --out=- > $out
+    if isnewer "$1" "$out"; then
+        "$WYVERN_DIR/mtsc.exe" --target=es2019 --jsx=JSX.createElement $1 --minify --out=- > $out
+    fi
 }
 
 function less() {
     out="$("$WYVERN_DIR/pt.exe" $1 less~css -e css)"
-    "$WYVERN_DIR/mless.exe" $1 --out= > $out
+    if isnewer "$1" "$out"; then
+        "$WYVERN_DIR/mless.exe" $1 --out= > $out
+    fi
 }
 
 function htmlx() {
     out="$("$WYVERN_DIR/pt.exe" $1 -e html)"
-    python3 "$WYVERN_DIR/generator.py" $1 | "$WYVERN_DIR/mtsc.exe" --verbose --html --target=es2019 --jsx=JSX.createElement --module=es2020 --out | "$WYVERN_DIR/mless.exe" --html --verbose --out= > $out
+    if isnewer "$1" "$out"; then
+        python3 "$WYVERN_DIR/generator.py" $1 | "$WYVERN_DIR/mtsc.exe" --verbose --html --target=es2019 --jsx=JSX.createElement --module=es2020 --out | "$WYVERN_DIR/mless.exe" --html --verbose --out= > $out
+    fi
 }
 
 function grc() {
-    curl "$(cat $1)" > "$("$WYVERN_DIR/pt.exe" $1 --ext=)"
+    out="$("$WYVERN_DIR/pt.exe" $1 --ext=)"
+    if isnewer "$1" "$out"; then
+        curl "$(cat $1)" > $out
+    fi
 }
 
 function compile() {
     filename="$(basename "$1")"
     type="${filename##*.}"
-    if [ "$type" == 'ts' ]; then
-        tsc $1
-    elif [ "$type" == 'tsx' ]; then
+    if [ "$type" == 'ts' || "$type" == 'mts' || "$type" == 'tsx' || "$type" == 'js' || "$type" == 'mjs' ]; then
         tsc $1
     elif [ "$type" == 'less' ]; then
         less $1
     elif [ "$type" == 'htmlx' ]; then
         htmlx $1
     elif [ "$type" == 'grc' ]; then
-        fetch $1
+        grc $1
     else
         echo "Unsupported file type: '$type' for file '$1'"
     fi
@@ -132,3 +143,85 @@ function compile() {
 function lsext() {
     find | grep -P '\.'$1'$' | grep -Pv '/\.'
 }
+
+POSITIONAL_ARGS=()
+
+# https://stackoverflow.com/a/14203146
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    # -e|--extension)
+    #   EXTENSION="$2"
+    #   shift # past argument
+    #   shift # past value
+    #   ;;
+    # -s|--searchpath)
+    #   SEARCHPATH="$2"
+    #   shift # past argument
+    #   shift # past value
+    #   ;;
+    # --default)
+    #   DEFAULT=YES
+    #   shift # past argument
+    #   ;;
+    -*|--*)
+      echo "Unknown option '$1'"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL_ARGS[@]}"
+
+ACTION=$1
+shift
+
+if [ "$ACTION" == 'run' ]; then
+    python3 -m http.server --bind localhost
+elif [ "$ACTION" == 'help' ]; then
+    cat << HELPTEXT
+=== Wyvern ===
+(C) 2022-2023 Trin Wasinger
+
+No information avalible yet
+
+HELPTEXT
+elif [ "$ACTION" == 'build' ]; then
+    echo "Updating project dependencies..."
+    for file in $(lsext grc); do
+        grc $file
+    done
+    
+    echo "Compiling Less..."
+    for file in $(lsext less); do
+       less $file
+    done;
+
+    echo "Compiling TypeScript..."
+    for file in $(lsext ts); do
+       tsc $file
+    done;
+
+    for file in $(lsext tsx); do
+       tsc $file
+    done;
+
+    for file in $(find | grep -P '(?<!\.min)\.m?js$' | grep -Pv '/\.'); do
+       tsc $file
+    done;
+
+    echo "Generating HTML..."
+    for file in $(lsext htmlx); do
+        htmlx $file
+    done;
+
+    echo "Generating Sitemap..."
+    python3 "$WYVERN_DIR/sitemap.py"
+
+    echo "Done!"
+else
+    echo "Unknown action '$ACTION'"
+fi
