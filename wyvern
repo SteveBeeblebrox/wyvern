@@ -20,8 +20,6 @@ if [ ! $(ls "$WYVERN_DIR" | grep sitemap.py) ]; then
 import os
 import json
 
-assert os.getcwd().endswith('.github.io')
-
 def dirmap(directory_path):
     directory_map ={}
 
@@ -96,15 +94,21 @@ function isnewer {
     [ $1 -nt $2 ]
 }
 
+function mkfile() {
+    mkdir -p "$(dirname "$1")" && touch "$1"
+}
+
 function tsc() {
     out="$("$WYVERN_DIR/pt".exe $1 ts~js '(?<=\.m|\.)tsx?$~~js' '(?=\..?js.?$)~~.min')"
     if isnewer "$1" "$out"; then
+        mkfile "$out"
         "$WYVERN_DIR/mtsc.exe" --target=es2019 --jsx=JSX.createElement $1 --minify --out=- > $out
     fi
 }
 
 function less() {
     out="$("$WYVERN_DIR/pt.exe" $1 less~css -e css)"
+    mkfile "$out"
     if isnewer "$1" "$out"; then
         "$WYVERN_DIR/mless.exe" $1 --out= > $out
     fi
@@ -205,6 +209,10 @@ elif [ "$ACTION" == 'build' ]; then
 
     echo "Compiling TypeScript..."
     for file in $(lsext ts); do
+       tsc $file
+    done;
+
+    for file in $(lsext mts); do
        tsc $file
     done;
 
