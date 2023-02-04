@@ -91,7 +91,7 @@ if [ ! $(ls | grep globals.py) ]; then
 fi
 
 function isnewer {
-    [[ $1 -nt $2 || "$FORCE_REBUILD" ]]
+    [[ $1 -nt $2 || $FORCE_REBUILD ]]
 }
 
 function mkfile() {
