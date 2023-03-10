@@ -13,7 +13,7 @@ mkdir -p "$WYVERN_DIR"
 function dep() {
     if [[ ! $(ls "$WYVERN_DIR" | grep "$1$EXE_SUFFIX") ]]; then
         src="https://github.com/SteveBeeblebrox/$1/releases/download/v$2/$1$EXE_SUFFIX"
-        # echo "Downloading $1$EXE_SUFFIX from $SRC..."
+        echo "Downloading $1$EXE_SUFFIX from $src..."
         wget $src -P "$WYVERN_DIR" 2>/dev/null
         chmod +x "$WYVERN_DIR/$1$EXE_SUFFIX"
     fi
@@ -138,6 +138,8 @@ function grc() {
 
 function compile() {
     filename="$(basename "$1")"
+    echo "Compiling $filename..."
+
     type="${filename##*.}"
     if [[ "$type" == 'ts' || "$type" == 'mts' || "$type" == 'tsx' || "$type" == 'js' || "$type" == 'mjs' ]]; then
         tsc $1
@@ -150,6 +152,8 @@ function compile() {
     else
         echo "Unsupported file type: '$type' for file '$1'"
     fi
+
+    echo 'Done!'
 }
 
 function lsext() {
@@ -173,7 +177,7 @@ while [[ $# -gt 0 ]]; do
     #   shift # past argument
     #   shift # past value
     #   ;;
-     --force)
+     -f|--force)
        FORCE_REBUILD='YES'
        shift
        ;;
@@ -194,6 +198,7 @@ ACTION=$1
 shift
 
 if [ "$ACTION" == 'run' ]; then
+    echo "Running webserver on localhost. Stop with ^C"
     python3 -m http.server --bind localhost
 elif [ "$ACTION" == 'help' ]; then
     cat << HELPTEXT
@@ -260,11 +265,14 @@ elif [ "$ACTION" == 'build' ]; then
 elif [ "$ACTION" == '' ]; then
     echo "Wyvern is ready"
 elif [ "$ACTION" == 'watch' ]; then
+    echo "Watching $1. Stop with ^C"
     while true; do
         inotifywait -e modify $1 &>/dev/null && compile $1
     done
 elif [ "$ACTION" == 'compile' ]; then
     compile $1
+elif [ "$ACTION" == 'ghpages' ]; then
+    echo "GitHub Pages support NYI!"
 else
     echo "Unknown action '$ACTION'"
 fi
