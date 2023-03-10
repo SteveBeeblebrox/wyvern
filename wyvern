@@ -168,6 +168,9 @@ set -- "${POSITIONAL_ARGS[@]}"
 ACTION=$1
 shift
 
+if [[ "$BUILD_DIR" != '.' ]]; then
+    rm -rf "$BUILD_DIR/"
+fi
 mkdir -p "$BUILD_DIR"
 
 if [ "$ACTION" == 'run' ]; then
@@ -225,7 +228,6 @@ elif [ "$ACTION" == 'build' ]; then
     done;
 
     if [[ "$BUILD_DIR" != '.' ]]; then
-        rm -rf "$BUILD_DIR/"
         echo "Copying static files to build dir..."
         for file in $(find !(*.htmlx|*.?(m)ts?(x)|*.less|*.grc|*.py|wyvern|__pycache__|.*) -type f | grep -v "$BUILD_DIR/" | grep -Pv "^$BUILD_DIR\$"); do
             out="$BUILD_DIR/$file"
