@@ -168,7 +168,7 @@ set -- "${POSITIONAL_ARGS[@]}"
 ACTION=$1
 shift
 
-if [[ "$BUILD_DIR" != '.' && -n "${BUILD_DIR// /}"]]; then
+if [[ "$BUILD_DIR" != '.' && -n "${BUILD_DIR// /}" ]]; then
     rm -rf "$BUILD_DIR/"
 fi
 mkdir -p "$BUILD_DIR"
