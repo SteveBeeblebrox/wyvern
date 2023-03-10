@@ -11,7 +11,7 @@ fi
 
 mkdir -p "$WYVERN_DIR"
 function dep() {
-    if [ ! $(ls "$WYVERN_DIR" | grep "$1$EXE_SUFFIX") ]; then
+    if [[ ! $(ls "$WYVERN_DIR" | grep "$1$EXE_SUFFIX") ]]; then
         src="https://github.com/SteveBeeblebrox/$1/releases/download/v$2/$1$EXE_SUFFIX"
         # echo "Downloading $1$EXE_SUFFIX from $SRC..."
         wget $src -P "$WYVERN_DIR" 2>/dev/null
@@ -23,7 +23,7 @@ dep mless 4.1.2
 dep mtsc 4.9.4
 dep pt 1.1.0
 
-if [ ! $(ls "$WYVERN_DIR" | grep sitemap.py) ]; then
+if [[ ! $(ls "$WYVERN_DIR" | grep sitemap.py) ]]; then
     cat << 'ENDPY' > "$WYVERN_DIR/sitemap.py"
 import os
 import json
@@ -55,7 +55,7 @@ finally:
 ENDPY
 fi
 
-if [ ! $(ls "$WYVERN_DIR" | grep generator.py) ]; then
+if [[ ! $(ls "$WYVERN_DIR" | grep generator.py) ]]; then
     cat << 'ENDPY' > "$WYVERN_DIR/generator.py"
 import sys
 import os
@@ -94,7 +94,7 @@ with fileinput.input() as file:
 ENDPY
 fi
 
-if [ ! $(ls | grep globals.py) ]; then
+if [[ ! $(ls | grep globals.py) ]]; then
     touch globals.py
 fi
 
@@ -139,13 +139,13 @@ function grc() {
 function compile() {
     filename="$(basename "$1")"
     type="${filename##*.}"
-    if [ "$type" == 'ts' || "$type" == 'mts' || "$type" == 'tsx' || "$type" == 'js' || "$type" == 'mjs' ]; then
+    if [[ "$type" == 'ts' || "$type" == 'mts' || "$type" == 'tsx' || "$type" == 'js' || "$type" == 'mjs' ]]; then
         tsc $1
-    elif [ "$type" == 'less' ]; then
+    elif [[ "$type" == 'less' ]]; then
         less $1
-    elif [ "$type" == 'htmlx' ]; then
+    elif [[ "$type" == 'htmlx' ]]; then
         htmlx $1
-    elif [ "$type" == 'grc' ]; then
+    elif [[ "$type" == 'grc' ]]; then
         grc $1
     else
         echo "Unsupported file type: '$type' for file '$1'"
@@ -259,6 +259,12 @@ elif [ "$ACTION" == 'build' ]; then
     echo "Done!"
 elif [ "$ACTION" == '' ]; then
     echo "Wyvern is ready"
+elif [ "$ACTION" == 'watch' ]; then
+    while true; do
+        inotifywait -e modify $1 &>/dev/null && compile $1
+    done
+elif [ "$ACTION" == 'compile' ]; then
+    compile $1
 else
     echo "Unknown action '$ACTION'"
 fi
