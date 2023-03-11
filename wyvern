@@ -96,6 +96,7 @@ function less() {
 function htmlx() {
     out="$BUILD_DIR/$("$WYVERN_DIR/pt$EXE_SUFFIX" $1 -e html)"
     if isnewer "$1" "$out"; then
+        mkfile "$out"
         python3 "$WYVERN_DIR/generator.py" $1 | "$WYVERN_DIR/mtsc$EXE_SUFFIX" --verbose --html --target=es2019 --jsx=JSX.createElement --module=es2020 --out | "$WYVERN_DIR/mless$EXE_SUFFIX" --html --verbose --out= > $out
     fi
 }
@@ -103,6 +104,7 @@ function htmlx() {
 function grc() {
     out="$BUILD_DIR/$("$WYVERN_DIR/pt$EXE_SUFFIX" $1 --ext=)"
     if isnewer "$1" "$out"; then
+        mkfile "$out"
         curl "$(cat $1)?$(date +%s)" 2>/dev/null > $out
     fi
 }
