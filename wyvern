@@ -242,7 +242,7 @@ elif [ "$ACTION" == 'build' ]; then
 
     if [[ "$BUILD_DIR" != '.' ]]; then
         echo "Copying static files to build dir..."
-        for file in $(find -type f | grep -vP '\.(?:htmlx|py|m?tsx?|less|grc)$|^\.\/\.|^\.\/(?:_site|__pycache__)\/|^\.\/wyvern$'); do
+        for file in $(find -type f | grep -vP '\.(?:htmlx|py|m?tsx?|less|grc|conf)$|^\.\/\.|^\.\/(?:_site|__pycache__)\/|^\.\/wyvern$'); do
             out="$BUILD_DIR/$file"
             mkdir -p $(dirname $out)
             cp $file "$out"
