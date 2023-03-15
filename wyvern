@@ -137,6 +137,17 @@ POSITIONAL_ARGS=()
 
 FORCE_REBUILD=''
 
+if [[ $(ls | grep 'wyvern\.conf') ]]; then
+    echo "Reading config file..."
+    config=$(cat wyvern.conf)
+    if [[ $(echo "$config" | grep '^--out .') ]]; then
+        BUILD_DIR="$(echo "$config" | grep -Po '(?<=--out )[^\r\n]*')"
+    fi;
+    if [[ $(echo "$config" | grep '^--force') ]]; then
+        FORCE_REBUILD='YES'
+    fi;
+fi;
+
 # https://stackoverflow.com/a/14203146
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -170,7 +181,7 @@ set -- "${POSITIONAL_ARGS[@]}"
 ACTION=$1
 shift
 
-if [[ "$BUILD_DIR" != '.' && -n "${BUILD_DIR// /}" && -n "${BUILD_DIR//\//}" ]]; then
+if [[ "$FORCE_REBUILD" == "YES" && "$BUILD_DIR" != '.' && -n "${BUILD_DIR// /}" && -n "${BUILD_DIR//\//}" ]]; then
     rm -rf "$BUILD_DIR/"
 fi
 mkdir -p "$BUILD_DIR"
