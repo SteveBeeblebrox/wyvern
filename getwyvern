@@ -1,6 +1,6 @@
-echo "Updating Wyvern..."
+echo "Fetching Wyvern..."
 rm -rf .wyvern
 wget -q https://raw.githubusercontent.com/SteveBeeblebrox/wyvern/main/wyvern -O wyvern
 chmod +x wyvern
 bash wyvern
-echo "Done."
+echo "Done"
