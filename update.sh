@@ -1,4 +1,4 @@
 echo "Updating wyvern..."
 rm -rf .wyvern
-wget https://raw.githubusercontent.com/SteveBeeblebrox/wyvern/main/wyvern
+wget -q https://raw.githubusercontent.com/SteveBeeblebrox/wyvern/main/wyvern -O wyvern
 echo "Done."
